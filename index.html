@@ -3,126 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Workforce Intelligence & Strategy Suite</title>
+    <title>Workforce & Capacity Planning Dashboard</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: #f1f1f1; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
 
-        /* Chart Container Specifics - Mandatory Constraint */
+        /* Chart Container Specifics */
         .chart-container {
             position: relative;
             width: 100%;
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-            height: 320px;
+            height: 300px;
             max-height: 400px;
         }
-
-        .matrix-container {
-            max-height: 500px;
-            overflow-y: auto;
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 350px;
+            }
         }
-
-        @media (max-width: 640px) {
-            .chart-container { height: 280px; }
-        }
-
-        /* Status Colors */
-        .bg-success-subtle { background-color: #ecfdf5; color: #065f46; }
-        .bg-danger-subtle { background-color: #fef2f2; color: #991b1b; }
-        .bg-warning-subtle { background-color: #fffbeb; color: #92400e; }
     </style>
 </head>
-<body class="bg-stone-50 text-stone-900 font-sans antialiased selection:bg-indigo-100">
+<body class="bg-stone-50 text-stone-800 font-sans antialiased selection:bg-indigo-100 selection:text-indigo-800">
 
-    <!-- Chosen Palette: Warm Professional
-         Background: Stone-50 (Neutral Calm)
-         Primary: Indigo-600 (Strategic)
-         Profit/Success: Emerald-600
-         Risk/Danger: Rose-600
+    <!-- Chosen Palette: Warm Neutrals with Indigo/Emerald/Rose Accents
+         Background: Stone-50
+         Text: Stone-800
+         Primary Action: Indigo-600
+         Success: Emerald-600
+         Danger: Rose-600
     -->
 
     <!-- Application Structure Plan:
-         1. **Sidebar Navigation**: Centralized control for Operations, Performance (Individual), Planner, and Bench.
-         2. **Operations Hub**: High-level view of Branch-wise capacity vs demand.
-         3. **Talent Matrix**: The "Individual Performance" view showing Salary, Billing, and ROI for every recruiter.
-         4. **Growth Simulator**: Financial "What-If" tool for new client onboarding.
-         5. **Bench Analytics**: Specific marketing intensity tracking for Bench Sales categories.
+         1.  **Sidebar Navigation**: Context switching between 'Overview', 'Capacity Planner' (Simulator), and 'Bench Analytics'.
+         2.  **Top Bar**: Global Filters (Branch, Stream) acting as the main slicers described in the Power BI blueprint.
+         3.  **Dashboard Area**: Dynamic grid layout.
+             -   **Overview**: High-level KPIs (Headcount, Capacity, Gap) and a breakdown Matrix.
+             -   **Planner**: The "What-If" simulator for incoming roles.
+             -   **Bench**: Specific focus on Bench utilization gauge.
+         4.  **Data Logic**: JavaScript objects simulate the Star Schema (Dim_Employee, Fact_Recruiting, etc.) to perform client-side aggregations identical to the DAX measures.
     -->
 
     <!-- Visualization & Content Choices:
-         - **KPI Dash**: Immediate visibility into Profit, Underperformance count, and Hiring Gap.
-         - **Grouped Bar Charts**: Visualizing Branch Load vs. Capacity using Chart.js.
-         - **ROI Matrix**: Tabular hierarchy with color-coded status for individual profitability.
-         - **Doughnut Charts**: Representing utilization ratios.
-         - **NO SVG/Mermaid**: Using HTML semantics, Tailwind classes, and Unicode for icons.
+         1.  **KPI Cards**: Simple text/number display for immediate status. Goal: Inform.
+         2.  **Cluster Bar Chart**: Comparing Capacity vs. Load per Branch. Goal: Compare. Library: Chart.js.
+         3.  **Interactive Matrix**: HTML Table with conditional formatting (Red/Green backgrounds) for the 'Bandwidth Gap'. Goal: Organize & Inform.
+         4.  **Gauge Chart**: Doughnut chart (Chart.js) to show Bench Utilization %. Goal: Relationships/Status.
+         5.  **Simulator Slider**: HTML Range input to replicate the Power BI 'What-If' parameter. Goal: Change/Predict.
     -->
 
     <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
 
     <div class="flex h-screen overflow-hidden">
-        <!-- Sidebar Navigation -->
-        <aside class="w-64 bg-slate-900 text-slate-300 hidden md:flex flex-col z-20">
-            <div class="p-6 border-b border-slate-800">
-                <h1 class="text-xl font-bold text-white tracking-tighter">RECRUIT<span class="text-indigo-400">.OPS</span></h1>
-                <p class="text-[10px] uppercase font-black text-slate-500 mt-1 tracking-widest">Strategy Suite</p>
+        <!-- Sidebar -->
+        <aside class="w-64 bg-white border-r border-stone-200 hidden md:flex flex-col z-10">
+            <div class="p-6 border-b border-stone-100">
+                <h1 class="text-xl font-bold text-indigo-900 tracking-tight">Workforce<span class="text-indigo-600">.bi</span></h1>
+                <p class="text-xs text-stone-500 mt-1">Capacity Planning System</p>
             </div>
             
-            <nav class="flex-1 p-4 space-y-1">
-                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center space-x-3 px-4 py-3 bg-slate-800 text-white rounded-xl transition-all">
-                    <span class="text-lg">📊</span>
-                    <span class="text-sm font-semibold">Operations Hub</span>
+            <nav class="flex-1 p-4 space-y-2">
+                <button onclick="switchTab('overview')" id="nav-overview" class="w-full flex items-center space-x-3 px-4 py-3 bg-indigo-50 text-indigo-700 rounded-lg font-medium transition-colors">
+                    <span>📊</span>
+                    <span>Operations Overview</span>
                 </button>
-                <button onclick="switchTab('talent')" id="nav-talent" class="w-full flex items-center space-x-3 px-4 py-3 hover:bg-slate-800 rounded-xl transition-all">
-                    <span class="text-lg">🎯</span>
-                    <span class="text-sm font-semibold">Talent Performance</span>
+                <button onclick="switchTab('planner')" id="nav-planner" class="w-full flex items-center space-x-3 px-4 py-3 text-stone-600 hover:bg-stone-50 rounded-lg font-medium transition-colors">
+                    <span>🧮</span>
+                    <span>Bandwidth Planner</span>
                 </button>
-                <button onclick="switchTab('planner')" id="nav-planner" class="w-full flex items-center space-x-3 px-4 py-3 hover:bg-slate-800 rounded-xl transition-all">
-                    <span class="text-lg">🔮</span>
-                    <span class="text-sm font-semibold">Growth Planner</span>
-                </button>
-                <button onclick="switchTab('bench')" id="nav-bench" class="w-full flex items-center space-x-3 px-4 py-3 hover:bg-slate-800 rounded-xl transition-all">
-                    <span class="text-lg">📣</span>
-                    <span class="text-sm font-semibold">Bench Sales</span>
+                <button onclick="switchTab('bench')" id="nav-bench" class="w-full flex items-center space-x-3 px-4 py-3 text-stone-600 hover:bg-stone-50 rounded-lg font-medium transition-colors">
+                    <span>👥</span>
+                    <span>Bench Analytics</span>
                 </button>
             </nav>
 
-            <div class="p-4 border-t border-slate-800 bg-slate-950">
-                <div class="text-[10px] font-bold text-slate-500 uppercase mb-2">Live Status</div>
-                <div class="flex items-center space-x-2">
-                    <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span class="text-xs text-slate-400">Data Synchronized</span>
+            <div class="p-4 border-t border-stone-100">
+                <div class="bg-stone-100 rounded-lg p-3">
+                    <p class="text-xs font-semibold text-stone-600 uppercase mb-1">Data Source</p>
+                    <p class="text-xs text-stone-500">Live Simulation (Browser)</p>
+                    <p class="text-xs text-stone-400 mt-1">Last update: Just now</p>
                 </div>
             </div>
         </aside>
 
-        <!-- Main Content Area -->
-        <main class="flex-1 flex flex-col overflow-hidden">
-            <!-- Global Filter Header -->
-            <header class="bg-white border-b border-stone-200 p-4 shadow-sm z-10">
-                <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden relative">
+            
+            <!-- Mobile Header -->
+            <div class="md:hidden bg-white border-b border-stone-200 p-4 flex justify-between items-center">
+                <h1 class="text-lg font-bold text-indigo-900">Workforce.bi</h1>
+                <button onclick="toggleMobileMenu()" class="text-stone-600">☰</button>
+            </div>
+
+            <!-- Filters Bar -->
+            <header class="bg-white border-b border-stone-200 p-4 shadow-sm z-20">
+                <div class="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
-                        <h2 id="page-title" class="text-lg font-bold text-stone-800">Operations Hub</h2>
-                        <p class="text-xs text-stone-500">Managing Capacity across all branches</p>
+                        <h2 id="page-title" class="text-lg font-semibold text-stone-800">Operations Overview</h2>
+                        <p class="text-sm text-stone-500">Global filters apply to all views.</p>
                     </div>
                     
                     <div class="flex flex-wrap gap-3">
-                        <div class="flex items-center space-x-2 bg-stone-50 border border-stone-200 px-3 py-1.5 rounded-lg">
-                            <span class="text-[10px] font-bold text-stone-400 uppercase">Site:</span>
-                            <select id="branch-select" onchange="updateDashboard()" class="bg-transparent text-sm font-bold focus:outline-none border-none">
-                                <option value="All">All Sites</option>
+                        <!-- Branch Slicer -->
+                        <div class="relative">
+                            <label for="branch-select" class="block text-xs font-medium text-stone-400 uppercase mb-1">Branch</label>
+                            <select id="branch-select" onchange="updateDashboard()" class="block w-40 pl-3 pr-8 py-2 text-sm border border-stone-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md bg-stone-50">
+                                <option value="All">All Branches</option>
+                                <!-- Populated by JS -->
                             </select>
                         </div>
-                        <div class="flex items-center space-x-2 bg-stone-50 border border-stone-200 px-3 py-1.5 rounded-lg">
-                            <span class="text-[10px] font-bold text-stone-400 uppercase">Stream:</span>
-                            <select id="stream-select" onchange="updateDashboard()" class="bg-transparent text-sm font-bold focus:outline-none border-none">
+
+                        <!-- Stream Slicer -->
+                        <div class="relative">
+                            <label for="stream-select" class="block text-xs font-medium text-stone-400 uppercase mb-1">Stream</label>
+                            <select id="stream-select" onchange="updateDashboard()" class="block w-40 pl-3 pr-8 py-2 text-sm border border-stone-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 rounded-md bg-stone-50">
                                 <option value="All">All Streams</option>
+                                <!-- Populated by JS -->
                             </select>
                         </div>
                     </div>
@@ -130,77 +139,89 @@
             </header>
 
             <!-- Scrollable Content -->
-            <div class="flex-1 overflow-y-auto p-4 md:p-8" id="main-scroll">
+            <div class="flex-1 overflow-y-auto bg-stone-50 p-4 md:p-8" id="main-scroll">
                 <div class="max-w-7xl mx-auto space-y-8">
 
-                    <!-- SECTION: OPERATIONS HUB -->
-                    <div id="view-overview" class="space-y-6 animate-in fade-in duration-500">
-                        <div class="bg-indigo-50 border-l-4 border-indigo-600 p-4 rounded-r-xl">
-                            <p class="text-sm text-indigo-900 leading-relaxed">
-                                <strong>Operations Overview:</strong> This section monitors the balance between client demand and our current headcount. 
-                                We track the <strong>Hiring Gap</strong>—the difference between active roles and our team's maximum handling capacity.
+                    <!-- VIEW: OVERVIEW -->
+                    <div id="view-overview" class="space-y-6 animate-fade">
+                        <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-md">
+                            <p class="text-sm text-indigo-900">
+                                <strong>Welcome to the Command Center.</strong> This view aggregates data across all branches to show total capacity vs. current workload.
+                                Use the filters above to drill down into specific locations. The metrics below are calculated in real-time based on the <em>Blueprint</em> logic.
                             </p>
                         </div>
 
-                        <!-- Global KPIs -->
+                        <!-- KPI Cards -->
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-                                <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Total Profit</p>
-                                <p class="text-2xl font-black text-emerald-600 mt-1" id="kpi-profit">₹0</p>
-                                <p class="text-[10px] text-stone-400 mt-1">Revenue minus Salary</p>
+                            <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
+                                <p class="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Headcount</p>
+                                <div class="flex items-baseline mt-2">
+                                    <span class="text-2xl font-bold text-stone-800" id="kpi-headcount">0</span>
+                                    <span class="ml-2 text-xs font-medium text-stone-500">Recruiters</span>
+                                </div>
                             </div>
-                            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-                                <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Hiring Gap</p>
-                                <p class="text-2xl font-black text-rose-600 mt-1" id="kpi-gap">0</p>
-                                <p class="text-[10px] text-stone-400 mt-1">Unfilled Requirements</p>
+                            <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
+                                <p class="text-xs font-bold text-stone-400 uppercase tracking-wider">Total Capacity</p>
+                                <div class="flex items-baseline mt-2">
+                                    <span class="text-2xl font-bold text-indigo-600" id="kpi-capacity">0</span>
+                                    <span class="ml-2 text-xs font-medium text-stone-500">Units</span>
+                                </div>
                             </div>
-                            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-                                <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">Critical Risk</p>
-                                <p class="text-2xl font-black text-orange-600 mt-1" id="kpi-risk">0</p>
-                                <p class="text-[10px] text-stone-400 mt-1">Underperforming < 40%</p>
+                            <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm">
+                                <p class="text-xs font-bold text-stone-400 uppercase tracking-wider">Current Load</p>
+                                <div class="flex items-baseline mt-2">
+                                    <span class="text-2xl font-bold text-stone-800" id="kpi-load">0</span>
+                                    <span class="ml-2 text-xs font-medium text-stone-500">Roles + Bench</span>
+                                </div>
                             </div>
-                            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-                                <p class="text-[10px] font-black text-stone-400 uppercase tracking-widest">New Hires</p>
-                                <p class="text-2xl font-black text-indigo-600 mt-1" id="kpi-joins">0</p>
-                                <p class="text-[10px] text-stone-400 mt-1">Joining in 15 days</p>
+                            <div class="bg-white p-5 rounded-xl border border-stone-200 shadow-sm" id="kpi-gap-card">
+                                <p class="text-xs font-bold text-stone-400 uppercase tracking-wider">Bandwidth Gap</p>
+                                <div class="flex items-baseline mt-2">
+                                    <span class="text-2xl font-bold" id="kpi-gap">0</span>
+                                    <span class="ml-2 text-xs font-medium text-stone-500">Available</span>
+                                </div>
                             </div>
                         </div>
 
-                        <!-- Capacity Charts -->
+                        <!-- Main Chart Row -->
                         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            <div class="lg:col-span-2 bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-                                <h3 class="text-sm font-bold text-stone-800 mb-4">Branch-wise Capacity vs Load</h3>
+                            <div class="lg:col-span-2 bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                                <h3 class="text-md font-bold text-stone-800 mb-4">Capacity vs. Load by Branch</h3>
                                 <div class="chart-container">
-                                    <canvas id="capacityChart"></canvas>
+                                    <canvas id="mainBarChart"></canvas>
                                 </div>
                             </div>
-                            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-                                <h3 class="text-sm font-bold text-stone-800 mb-4">Site Profit Distribution</h3>
-                                <div class="chart-container h-64">
-                                    <canvas id="profitChart"></canvas>
+                            <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm flex flex-col">
+                                <h3 class="text-md font-bold text-stone-800 mb-4">Utilization Breakdown</h3>
+                                <div class="flex-1 flex items-center justify-center chart-container">
+                                    <canvas id="utilizationPieChart"></canvas>
+                                </div>
+                                <div class="mt-4 text-center">
+                                    <p class="text-xs text-stone-500">Displays proportion of used vs. available capacity.</p>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Branch Matrix -->
-                        <div class="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                            <div class="px-6 py-4 bg-stone-50 border-b border-stone-200 flex justify-between items-center">
-                                <h3 class="text-sm font-bold text-stone-800">Site Performance Breakdown</h3>
-                                <span class="text-[10px] font-bold text-stone-400">MANAGEMENT VIEW</span>
+                        <!-- Data Matrix -->
+                        <div class="bg-white rounded-xl border border-stone-200 shadow-sm overflow-hidden">
+                            <div class="p-6 border-b border-stone-100 flex justify-between items-center">
+                                <h3 class="text-md font-bold text-stone-800">Detailed Capacity Matrix</h3>
+                                <span class="text-xs px-2 py-1 bg-stone-100 text-stone-600 rounded">Live Data</span>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="w-full text-left text-sm">
-                                    <thead class="bg-stone-100 text-[10px] font-bold text-stone-500 uppercase tracking-widest">
+                                    <thead class="bg-stone-50 text-stone-500 uppercase text-xs">
                                         <tr>
-                                            <th class="px-6 py-4">Site Location</th>
-                                            <th class="px-6 py-4">Total HC</th>
-                                            <th class="px-6 py-4 text-right">Capacity</th>
-                                            <th class="px-6 py-4 text-right">Current Load</th>
-                                            <th class="px-6 py-4 text-right">Gap Status</th>
-                                            <th class="px-6 py-4 text-right">Billing (MTD)</th>
+                                            <th class="px-6 py-3 font-medium">Branch</th>
+                                            <th class="px-6 py-3 font-medium">Stream</th>
+                                            <th class="px-6 py-3 font-medium">Category</th>
+                                            <th class="px-6 py-3 font-medium text-right">Headcount</th>
+                                            <th class="px-6 py-3 font-medium text-right">Capacity</th>
+                                            <th class="px-6 py-3 font-medium text-right">Load</th>
+                                            <th class="px-6 py-3 font-medium text-center">Gap</th>
                                         </tr>
                                     </thead>
-                                    <tbody id="branch-body" class="divide-y divide-stone-100">
+                                    <tbody id="matrix-body" class="divide-y divide-stone-100 text-stone-700">
                                         <!-- JS Populated -->
                                     </tbody>
                                 </table>
@@ -208,120 +229,133 @@
                         </div>
                     </div>
 
-                    <!-- SECTION: TALENT PERFORMANCE -->
-                    <div id="view-talent" class="hidden space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                        <div class="bg-emerald-50 border-l-4 border-emerald-600 p-4 rounded-r-xl">
-                            <p class="text-sm text-emerald-900 leading-relaxed">
-                                <strong>Talent Matrix:</strong> Detailed performance tracking for every individual. 
-                                We evaluate ROI by comparing <strong>Monthly Salary</strong> against <strong>Revenue Generated</strong>. 
-                                Underperformers are flagged for management review or termination decisions.
+                    <!-- VIEW: PLANNER -->
+                    <div id="view-planner" class="space-y-6 hidden">
+                        <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-md">
+                            <p class="text-sm text-emerald-900">
+                                <strong>Strategic Planning Simulator.</strong> This tool replicates the "What-If" parameter from the blueprint. 
+                                Adjust the slider to simulate adding new roles to your selected view. The system calculates immediate hiring needs based on the "Gap" logic.
                             </p>
                         </div>
 
-                        <div class="bg-white rounded-2xl border border-stone-200 shadow-sm overflow-hidden">
-                            <div class="px-6 py-4 border-b border-stone-200 bg-stone-50/50 flex justify-between items-center">
-                                <h3 class="text-sm font-bold text-stone-800">Recruiter ROI & Performance</h3>
-                                <div class="flex items-center space-x-2">
-                                    <span class="flex items-center space-x-1 text-[10px] text-stone-400 font-bold"><span class="w-2 h-2 rounded-full bg-rose-500"></span><span>Action Needed</span></span>
-                                    <span class="flex items-center space-x-1 text-[10px] text-stone-400 font-bold"><span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>Top Talent</span></span>
-                                </div>
-                            </div>
-                            <div class="matrix-container">
-                                <table class="w-full text-left text-sm">
-                                    <thead class="bg-stone-100 text-[10px] font-bold text-stone-500 uppercase tracking-widest sticky top-0 z-10">
-                                        <tr>
-                                            <th class="px-6 py-4">Recruiter Name</th>
-                                            <th class="px-6 py-4">Manager / Team</th>
-                                            <th class="px-6 py-4 text-right">Salary (Cost)</th>
-                                            <th class="px-6 py-4 text-right">Revenue (MTD)</th>
-                                            <th class="px-6 py-4 text-right">ROI %</th>
-                                            <th class="px-6 py-4 text-center">Perf. Score</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="talent-body" class="divide-y divide-stone-100">
-                                        <!-- JS Populated -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- SECTION: GROWTH PLANNER -->
-                    <div id="view-planner" class="hidden space-y-6 animate-in fade-in duration-500">
-                        <div class="bg-slate-900 rounded-3xl p-10 text-white relative overflow-hidden shadow-2xl">
-                            <div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-                                <div class="space-y-6">
-                                    <h2 class="text-3xl font-bold tracking-tight">Scale Simulator</h2>
-                                    <p class="text-slate-400 text-sm leading-relaxed">
-                                        Planning to onboard a new client? Use this simulator to estimate how many new recruiters you need to hire and the impact on your monthly profit margins.
-                                    </p>
-                                    
-                                    <div class="space-y-4 pt-4">
-                                        <label class="block">
-                                            <span class="text-xs font-bold text-slate-500 uppercase tracking-widest">Incoming Role Demand</span>
-                                            <input type="range" id="sim-roles-slider" min="0" max="300" step="10" value="0" oninput="updateDashboard()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-400 mt-4">
-                                            <div class="flex justify-between text-[10px] text-slate-500 font-bold mt-2">
-                                                <span>0 ROLES</span>
-                                                <span class="text-white text-lg font-black" id="sim-val">0</span>
-                                                <span>300 ROLES</span>
-                                            </div>
+                        <div class="bg-white p-8 rounded-xl border border-stone-200 shadow-sm">
+                            <div class="flex flex-col md:flex-row gap-10 items-start">
+                                <div class="w-full md:w-1/2 space-y-6">
+                                    <div>
+                                        <label for="roles-slider" class="flex justify-between items-center mb-2">
+                                            <span class="text-sm font-bold text-stone-700 uppercase">Incoming Roles / Contracts</span>
+                                            <span class="px-3 py-1 bg-indigo-100 text-indigo-700 font-bold rounded text-sm" id="slider-value-display">0 Roles</span>
                                         </label>
+                                        <input type="range" id="roles-slider" min="0" max="200" step="5" value="0" class="w-full h-2 bg-stone-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                        <div class="flex justify-between text-xs text-stone-400 mt-2">
+                                            <span>0</span>
+                                            <span>50</span>
+                                            <span>100</span>
+                                            <span>150</span>
+                                            <span>200+</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="p-4 bg-stone-50 rounded-lg border border-stone-200">
+                                        <h4 class="text-xs font-bold text-stone-500 uppercase mb-2">Current Context</h4>
+                                        <div class="flex justify-between text-sm mb-1">
+                                            <span>Filtered Capacity:</span>
+                                            <span class="font-bold text-stone-800" id="sim-current-cap">0</span>
+                                        </div>
+                                        <div class="flex justify-between text-sm">
+                                            <span>Filtered Load:</span>
+                                            <span class="font-bold text-stone-800" id="sim-current-load">0</span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="bg-slate-800 p-8 rounded-2xl border border-slate-700 shadow-xl space-y-6">
-                                    <div class="text-center">
-                                        <p class="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Hiring Mandate</p>
-                                        <p class="text-6xl font-black text-indigo-400" id="sim-hc">0</p>
-                                        <p class="text-xs text-slate-400 mt-2 font-medium italic">New Recruiters Needed</p>
+                                <div class="w-full md:w-1/2 flex flex-col justify-center items-center p-6 bg-slate-900 rounded-2xl text-white relative overflow-hidden">
+                                    <!-- Dynamic Impact Card -->
+                                    <h3 class="text-sm font-medium text-slate-400 uppercase tracking-widest mb-4">Projected Impact</h3>
+                                    
+                                    <div class="text-center space-y-2 relative z-10">
+                                        <p class="text-5xl font-black" id="sim-hiring-needed">0</p>
+                                        <p class="text-sm text-slate-300">New Hires Required</p>
                                     </div>
-                                    <div class="pt-6 border-t border-slate-700 space-y-4">
+
+                                    <div class="mt-8 w-full border-t border-slate-700 pt-4 relative z-10">
                                         <div class="flex justify-between text-xs">
-                                            <span class="text-slate-500 font-bold">Additional Salary:</span>
-                                            <span class="font-bold text-rose-400" id="sim-cost">₹0</span>
+                                            <span class="text-slate-400">Projected Gap:</span>
+                                            <span class="font-bold" id="sim-projected-gap">0</span>
                                         </div>
-                                        <div class="flex justify-between text-xs">
-                                            <span class="text-slate-500 font-bold">Estimated Revenue:</span>
-                                            <span class="font-bold text-emerald-400" id="sim-rev">₹0</span>
-                                        </div>
-                                        <div class="flex justify-between text-sm border-t border-slate-700 pt-4">
-                                            <span class="text-slate-300 font-bold">Net Profit Gain:</span>
-                                            <span class="font-black text-white" id="sim-profit">₹0</span>
-                                        </div>
+                                        <p class="text-xs text-slate-500 mt-2 italic" id="sim-message">System capacity is stable.</p>
+                                    </div>
+
+                                    <!-- Decor -->
+                                    <div class="absolute -right-4 -bottom-4 text-slate-800 opacity-50">
+                                        <span class="text-9xl">⚖️</span>
                                     </div>
                                 </div>
                             </div>
-                            <!-- Decor -->
-                            <div class="absolute -right-12 -bottom-12 text-slate-800 opacity-20 pointer-events-none">
-                                <span class="text-[15rem] font-black italic">GROWTH</span>
-                            </div>
+                        </div>
+
+                        <!-- Sim Chart -->
+                        <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                             <h3 class="text-md font-bold text-stone-800 mb-4">Gap Analysis Forecast</h3>
+                             <div class="chart-container">
+                                <canvas id="simChart"></canvas>
+                             </div>
                         </div>
                     </div>
 
-                    <!-- SECTION: BENCH SALES -->
-                    <div id="view-bench" class="hidden space-y-6 animate-in fade-in duration-500">
-                        <div class="bg-amber-50 border-l-4 border-amber-600 p-4 rounded-r-xl">
-                            <p class="text-sm text-amber-900 leading-relaxed">
-                                <strong>Bench Marketing Focus:</strong> Unlike standard recruiting, Bench Sales is a volume-heavy workflow. 
-                                We measure "Bench Aging" and marketing intensity to ensure candidates are placed quickly.
+                    <!-- VIEW: BENCH ANALYTICS -->
+                    <div id="view-bench" class="space-y-6 hidden">
+                        <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
+                            <p class="text-sm text-blue-900">
+                                <strong>Bench Marketing Focus.</strong> Unlike role filling, Bench Sales is about utilization. 
+                                This view isolates the 'Bench Sales' and 'IT Bench Sales' categories to track candidate placement performance.
                             </p>
                         </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm flex flex-col items-center justify-center">
-                                <h3 class="text-sm font-bold text-stone-800 mb-6 w-full text-left">Bench Utilization Ratio</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-xl border border-stone-200 shadow-sm flex flex-col items-center justify-center">
+                                <h3 class="text-md font-bold text-stone-800 mb-4 w-full text-left">Bench Utilization</h3>
                                 <div class="relative w-48 h-48">
-                                    <canvas id="benchDoughnut"></canvas>
-                                    <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                                        <span class="text-4xl font-black text-stone-800" id="bench-pct">0%</span>
-                                        <span class="text-[10px] text-stone-400 font-bold uppercase">Placed</span>
+                                    <canvas id="benchGauge"></canvas>
+                                    <div class="absolute inset-0 flex items-center justify-center flex-col pointer-events-none">
+                                        <span class="text-3xl font-bold text-stone-800" id="bench-percent">0%</span>
+                                        <span class="text-xs text-stone-500">Placed</span>
                                     </div>
                                 </div>
                             </div>
-                            <div class="bg-white p-6 rounded-2xl border border-stone-200 shadow-sm">
-                                <h3 class="text-sm font-bold text-stone-800 mb-6">Marketing Aging (Days on Bench)</h3>
+
+                            <div class="md:col-span-2 bg-white p-6 rounded-xl border border-stone-200 shadow-sm">
+                                <div class="flex justify-between items-center mb-4">
+                                    <h3 class="text-md font-bold text-stone-800">Bench Aging & Distribution</h3>
+                                </div>
                                 <div class="chart-container">
-                                    <canvas id="agingChart"></canvas>
+                                    <canvas id="benchBarChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white rounded-xl border border-stone-200 shadow-sm">
+                             <div class="p-6 border-b border-stone-100">
+                                <h3 class="text-md font-bold text-stone-800">Bench Roster Summary</h3>
+                            </div>
+                            <div class="p-6">
+                                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                                    <div class="p-4 bg-stone-50 rounded-lg">
+                                        <p class="text-xs text-stone-500 uppercase">Total Candidates</p>
+                                        <p class="text-xl font-bold text-stone-800 mt-1" id="bench-total">0</p>
+                                    </div>
+                                    <div class="p-4 bg-stone-50 rounded-lg">
+                                        <p class="text-xs text-stone-500 uppercase">Active Marketing</p>
+                                        <p class="text-xl font-bold text-blue-600 mt-1" id="bench-active">0</p>
+                                    </div>
+                                    <div class="p-4 bg-stone-50 rounded-lg">
+                                        <p class="text-xs text-stone-500 uppercase">Placed</p>
+                                        <p class="text-xl font-bold text-emerald-600 mt-1" id="bench-placed">0</p>
+                                    </div>
+                                    <div class="p-4 bg-stone-50 rounded-lg">
+                                        <p class="text-xs text-stone-500 uppercase">Avg Days on Bench</p>
+                                        <p class="text-xl font-bold text-stone-800 mt-1">24</p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -332,310 +366,548 @@
         </main>
     </div>
 
-    <!-- Scripts Area -->
     <script>
-        // --- 1. DATA INFRASTRUCTURE ---
-        const branches = ["Hyderabad", "Vijayawada", "Noida", "Bangalore", "Bhopal", "Chennai", "Vijayawada"];
+        // --- 1. DATA GENERATION LOGIC (Replicating the Blueprint) ---
+
+        const branches = ["Hyderabad", "Vijayawada", "Noida", "Bangalore", "Bhopal", "Chennai"];
         const streams = ["Domestic Recruiting", "US IT Recruiting", "Canada Recruiting"];
         const categories = ["Engineering Recruiting", "IT Recruiting", "Bench Sales", "IT Bench Sales"];
-        const leads = ["Lead A", "Lead B", "Lead C", "Lead D"];
-        const managers = ["Manager 1", "Manager 2"];
-
-        // Capacity Config
+        
+        // Configuration from Blueprint
         const targets = {
-            "Engineering Recruiting": 15,
+            "Engineering Recruiting": 15, // Roles per recruiter
             "IT Recruiting": 20,
-            "Bench Sales": 8,
+            "Bench Sales": 6,             // Candidates per sales person
             "IT Bench Sales": 8
         };
 
-        let db = { employees: [], benchCandidates: [], newJoins: [] };
+        // Mock Database
+        let db = {
+            employees: [],
+            recruitingRoles: [],
+            benchCandidates: []
+        };
 
         function generateData() {
-            // Generate 120 recruiters
-            for (let i = 0; i < 120; i++) {
+            // Generate ~100 Employees
+            for (let i = 0; i < 100; i++) {
                 const branch = branches[Math.floor(Math.random() * branches.length)];
                 const stream = streams[Math.floor(Math.random() * streams.length)];
                 const category = categories[Math.floor(Math.random() * categories.length)];
-                const manager = managers[Math.floor(Math.random() * managers.length)];
-                const lead = leads[Math.floor(Math.random() * leads.length)];
                 
-                const baseSalary = stream === "Domestic Recruiting" ? 30000 : 55000;
-                const salary = baseSalary + (Math.random() * 20000);
-                
-                // Random performance factors
-                const perfFactor = 0.3 + Math.random() * 0.9; // 30% to 120% efficiency
-                const capacity = targets[category];
-                const activeRoles = Math.round(capacity * perfFactor);
-                
-                // Revenue: approx 2-4x salary for healthy business
-                const revenue = salary * (perfFactor * 2.5);
-                const score = Math.round(perfFactor * 100);
-
                 db.employees.push({
-                    id: `EMP${i+100}`,
-                    name: `Recruiter ${i+1}`,
-                    branch, stream, category, manager, lead,
-                    salary: Math.round(salary),
-                    revenue: Math.round(revenue),
-                    capacity,
-                    activeRoles,
-                    score
+                    id: `EMP${i}`,
+                    branch,
+                    stream,
+                    category,
+                    capacityPerUnit: targets[category]
                 });
             }
 
-            // Generate Bench Data
-            for (let i = 0; i < 40; i++) {
-                db.benchCandidates.push({
-                    branch: branches[Math.floor(Math.random() * branches.length)],
-                    status: Math.random() > 0.4 ? "Marketing" : "Placed",
-                    aging: Math.floor(Math.random() * 60)
-                });
-            }
+            // Generate Loads to create interesting data (some over capacity, some under)
+            db.employees.forEach(emp => {
+                const targetCap = targets[emp.category];
+                // Random load between 50% and 120% of capacity
+                const loadFactor = 0.5 + Math.random() * 0.7; 
+                const load = Math.round(targetCap * loadFactor);
 
-            // New Joins (15 days)
-            for (let i = 0; i < 12; i++) {
-                db.newJoins.push({ name: `Joiner ${i}`, date: 'March ' + (i + 1) });
-            }
-        }
-
-        // --- 2. LOGIC & CALCULATIONS ---
-        let charts = {};
-
-        function getStats() {
-            const bFilter = document.getElementById('branch-select').value;
-            const sFilter = document.getElementById('stream-select').value;
-
-            const filtered = db.employees.filter(e => 
-                (bFilter === 'All' || e.branch === bFilter) &&
-                (sFilter === 'All' || e.stream === sFilter)
-            );
-
-            let totalSal = 0;
-            let totalRev = 0;
-            let totalCap = 0;
-            let totalLoad = 0;
-            let riskCount = 0;
-
-            const branchMetrics = {};
-            branches.forEach(b => branchMetrics[b] = { hc: 0, cap: 0, load: 0, billing: 0, salary: 0 });
-
-            filtered.forEach(e => {
-                totalSal += e.salary;
-                totalRev += e.revenue;
-                totalCap += e.capacity;
-                totalLoad += e.activeRoles;
-                if(e.score < 45) riskCount++;
-
-                if(branchMetrics[e.branch]) {
-                    branchMetrics[e.branch].hc++;
-                    branchMetrics[e.branch].cap += e.capacity;
-                    branchMetrics[e.branch].load += e.activeRoles;
-                    branchMetrics[e.branch].billing += e.revenue;
-                    branchMetrics[e.branch].salary += e.salary;
+                if (emp.category.includes("Bench")) {
+                    // Generate Bench Candidates
+                    for(let j=0; j<load; j++) {
+                        db.benchCandidates.push({
+                            branch: emp.branch,
+                            status: Math.random() > 0.4 ? "Marketing" : "Placed", // 60% Placed, 40% Marketing
+                            category: emp.category
+                        });
+                    }
+                } else {
+                    // Generate Recruiting Roles
+                    for(let j=0; j<load; j++) {
+                        db.recruitingRoles.push({
+                            branch: emp.branch,
+                            status: Math.random() > 0.3 ? "Open" : "Filled", // 70% Open
+                            category: emp.category
+                        });
+                    }
                 }
             });
+        }
 
-            return { 
-                filtered, totalSal, totalRev, totalCap, totalLoad, riskCount, 
-                branchMetrics, 
-                bench: db.benchCandidates.filter(c => bFilter === 'All' || c.branch === bFilter) 
+        generateData();
+
+        // --- 2. STATE MANAGEMENT & METRICS ---
+
+        let currentState = {
+            filterBranch: 'All',
+            filterStream: 'All',
+            simRoles: 0
+        };
+
+        // Charts Instances
+        let charts = {};
+
+        function getFilteredData() {
+            // Filter Employees
+            let filteredEmps = db.employees.filter(e => {
+                return (currentState.filterBranch === 'All' || e.branch === currentState.filterBranch) &&
+                       (currentState.filterStream === 'All' || e.stream === currentState.filterStream);
+            });
+
+            // Calculate Metrics per Employee Grouping (aggregated to Branch/Category for display)
+            // We need to aggregate Capacity and Load
+            
+            let totalRecruiters = filteredEmps.length;
+            let totalCapacity = 0;
+            let currentLoad = 0;
+
+            // Aggregation by Branch for Charts
+            let branchAgg = {};
+            branches.forEach(b => branchAgg[b] = { cap: 0, load: 0 });
+
+            // Aggregation for Matrix
+            let matrixData = []; // { branch, stream, category, headcount, cap, load, gap }
+
+            // Helper to find load count
+            const getLoad = (branch, category) => {
+                if (category.includes("Bench")) {
+                    return db.benchCandidates.filter(c => c.branch === branch && c.category === category && c.status === "Marketing").length;
+                } else {
+                    return db.recruitingRoles.filter(r => r.branch === branch && r.category === category && r.status === "Open").length;
+                }
+            };
+
+            // We iterate through unique combinations in filteredEmps to build the matrix
+            // A simple way is to group filteredEmps
+            let groups = {};
+            filteredEmps.forEach(e => {
+                const key = `${e.branch}|${e.stream}|${e.category}`;
+                if (!groups[key]) groups[key] = { count: 0, capUnit: e.capacityPerUnit, branch: e.branch, stream: e.stream, category: e.category };
+                groups[key].count++;
+            });
+
+            for (let key in groups) {
+                const g = groups[key];
+                const cap = g.count * g.capUnit;
+                
+                // Load is technically per team/branch, here we approximate by splitting branch load proportionally or just recalculating specific filtering
+                // To be precise based on blueprint: Load is calculated via relationships.
+                // We will fetch ALL load items matching this Branch & Category (Stream is implied in Category/Branch for simplicity or we treat load as generic to branch/cat)
+                
+                // Refined Load Logic: 
+                // In the blueprint, Fact tables link to Branch. Stream is an Employee attribute.
+                // So, load is counted if it matches the Branch.
+                // To split load by Stream (which is a filter), we assume roles are assigned to the employees in that stream.
+                // For this simulation, we will assume uniform distribution of load across streams for the same category in a branch.
+                
+                let rawLoad = getLoad(g.branch, g.category);
+                
+                // If filtering by stream, we need to ensure we don't double count load if multiple streams share a branch/category (rare but possible). 
+                // Let's assume strict hierarchy: Load belongs to the unit.
+                // For simulation purposes: Load = rawLoad calculated above. 
+                // Note: If 'All' streams selected, rawLoad is correct. If specific Stream selected, we take the rawLoad.
+                
+                let groupLoad = rawLoad; 
+                // Adjustment: If multiple streams exist in one branch with same category, we divide load? 
+                // Let's keep it simple: The generator created roles linked to employees.
+                // But the DB structure for roles only has Branch/Category. 
+                // We will use the ratio of employees in this group vs total employees in this branch/category to allocate load.
+                
+                const totalEmpsInBranchCat = db.employees.filter(e => e.branch === g.branch && e.category === g.category).length;
+                const ratio = g.count / totalEmpsInBranchCat;
+                const allocatedLoad = Math.round(rawLoad * ratio);
+
+                totalCapacity += cap;
+                currentLoad += allocatedLoad;
+
+                branchAgg[g.branch].cap += cap;
+                branchAgg[g.branch].load += allocatedLoad;
+
+                matrixData.push({
+                    branch: g.branch,
+                    stream: g.stream,
+                    category: g.category,
+                    headcount: g.count,
+                    capacity: cap,
+                    load: allocatedLoad,
+                    gap: cap - allocatedLoad
+                });
+            }
+
+            // Bench Specifics
+            let benchTotal = db.benchCandidates.filter(c => (currentState.filterBranch === 'All' || c.branch === currentState.filterBranch)).length;
+            let benchActive = db.benchCandidates.filter(c => (currentState.filterBranch === 'All' || c.branch === currentState.filterBranch) && c.status === "Marketing").length;
+            let benchPlaced = db.benchCandidates.filter(c => (currentState.filterBranch === 'All' || c.branch === currentState.filterBranch) && c.status === "Placed").length;
+
+
+            return {
+                totalRecruiters,
+                totalCapacity,
+                currentLoad,
+                gap: totalCapacity - currentLoad,
+                branchAgg,
+                matrixData,
+                benchStats: { total: benchTotal, active: benchActive, placed: benchPlaced }
             };
         }
 
-        // --- 3. UI RENDERING ---
-        function updateDashboard() {
-            const stats = getStats();
-            const bFilter = document.getElementById('branch-select').value;
-            const simVal = parseInt(document.getElementById('sim-roles-slider').value);
+        // --- 3. UI UPDATES ---
 
-            // KPIs
-            document.getElementById('kpi-profit').innerText = `₹${Math.round((stats.totalRev - stats.totalSal)/100000)}L`;
-            document.getElementById('kpi-gap').innerText = Math.max(0, stats.totalLoad - stats.totalCap);
-            document.getElementById('kpi-risk').innerText = stats.riskCount;
-            document.getElementById('kpi-joins').innerText = db.newJoins.length;
-
-            // 1. Branch Matrix
-            const bBody = document.getElementById('branch-body');
-            bBody.innerHTML = '';
-            Object.entries(stats.branchMetrics).forEach(([name, m]) => {
-                const gap = m.load - m.cap;
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-stone-50 transition-colors";
-                tr.innerHTML = `
-                    <td class="px-6 py-4 font-bold text-stone-800">${name}</td>
-                    <td class="px-6 py-4">${m.hc} Recruiters</td>
-                    <td class="px-6 py-4 text-right font-medium">${m.cap}</td>
-                    <td class="px-6 py-4 text-right text-stone-500">${m.load}</td>
-                    <td class="px-6 py-4 text-right">
-                        <span class="px-2 py-1 rounded text-[10px] font-black ${gap > 0 ? 'bg-rose-100 text-rose-700' : 'bg-emerald-100 text-emerald-700'}">
-                            ${gap > 0 ? `+${gap} GAP` : 'OPTIMAL'}
-                        </span>
-                    </td>
-                    <td class="px-6 py-4 text-right font-bold text-indigo-600">₹${Math.round(m.billing/1000)}k</td>
-                `;
-                bBody.appendChild(tr);
+        function init() {
+            // Populate Filters
+            const branchSel = document.getElementById('branch-select');
+            branches.forEach(b => {
+                let opt = document.createElement('option');
+                opt.value = b;
+                opt.innerText = b;
+                branchSel.appendChild(opt);
             });
 
-            // 2. Talent Matrix
-            const tBody = document.getElementById('talent-body');
-            tBody.innerHTML = '';
-            stats.filtered.sort((a,b) => b.score - a.score).forEach(e => {
-                const roi = Math.round((e.revenue / e.salary) * 100);
-                const tr = document.createElement('tr');
-                tr.className = "hover:bg-stone-50 transition-colors group";
-                tr.innerHTML = `
-                    <td class="px-6 py-4">
-                        <p class="font-bold text-stone-800">${e.name}</p>
-                        <p class="text-[10px] text-stone-400 font-bold">${e.branch} • ${e.stream}</p>
-                    </td>
-                    <td class="px-6 py-4">
-                        <p class="text-[10px] text-stone-500 uppercase font-bold">${e.manager}</p>
-                        <p class="text-[9px] text-stone-400">${e.lead}</p>
-                    </td>
-                    <td class="px-6 py-4 text-right text-stone-500 font-mono">₹${e.salary.toLocaleString()}</td>
-                    <td class="px-6 py-4 text-right text-emerald-600 font-bold font-mono">₹${e.revenue.toLocaleString()}</td>
-                    <td class="px-6 py-4 text-right font-black ${roi < 150 ? 'text-rose-600' : 'text-emerald-600'}">${roi}%</td>
-                    <td class="px-6 py-4 text-center">
-                        <span class="px-2 py-1 rounded-full text-[10px] font-black ${e.score < 45 ? 'bg-rose-500 text-white animate-pulse' : 'bg-emerald-100 text-emerald-700'}">
-                            ${e.score}%
-                        </span>
-                    </td>
-                `;
-                tBody.appendChild(tr);
+            const streamSel = document.getElementById('stream-select');
+            streams.forEach(s => {
+                let opt = document.createElement('option');
+                opt.value = s;
+                opt.innerText = s;
+                streamSel.appendChild(opt);
             });
 
-            // 3. Simulator
-            const hcNeeded = Math.ceil(simVal / 15);
-            const addlSalary = hcNeeded * 45000;
-            const addlRevenue = simVal * 10000; // estimated margin per role
-            document.getElementById('sim-val').innerText = simVal;
-            document.getElementById('sim-hc').innerText = hcNeeded;
-            document.getElementById('sim-cost').innerText = `₹${(addlSalary/1000).toFixed(0)}k`;
-            document.getElementById('sim-rev').innerText = `₹${(addlRevenue/1000).toFixed(0)}k`;
-            document.getElementById('sim-profit').innerText = `₹${((addlRevenue - addlSalary)/1000).toFixed(0)}k`;
-
-            // 4. Bench Analytics
-            const placed = stats.bench.filter(c => c.status === "Placed").length;
-            const total = stats.bench.length;
-            const pct = total > 0 ? Math.round((placed/total)*100) : 0;
-            document.getElementById('bench-pct').innerText = `${pct}%`;
-
-            renderCharts(stats);
-        }
-
-        function renderCharts(stats) {
-            // Capacity Chart
-            const ctx1 = document.getElementById('capacityChart').getContext('2d');
-            const bNames = Object.keys(stats.branchMetrics);
-            const capData = bNames.map(n => stats.branchMetrics[n].cap);
-            const loadData = bNames.map(n => stats.branchMetrics[n].load);
-
-            if (charts.cap) charts.cap.destroy();
-            charts.cap = new Chart(ctx1, {
-                type: 'bar',
-                data: {
-                    labels: bNames,
-                    datasets: [
-                        { label: 'Capacity', data: capData, backgroundColor: '#e2e8f0', borderRadius: 4 },
-                        { label: 'Current Load', data: loadData, backgroundColor: '#4f46e5', borderRadius: 4 }
-                    ]
-                },
-                options: {
-                    responsive: true, maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { weight: 'bold', size: 10 } } } },
-                    scales: { y: { beginAtZero: true, grid: { color: '#f5f5f4' } } }
-                }
-            });
-
-            // Profit Doughnut
-            const ctx2 = document.getElementById('profitChart').getContext('2d');
-            const profitData = bNames.map(n => Math.max(0, stats.branchMetrics[n].billing - stats.branchMetrics[n].salary));
-            
-            if (charts.profit) charts.profit.destroy();
-            charts.profit = new Chart(ctx2, {
-                type: 'doughnut',
-                data: {
-                    labels: bNames,
-                    datasets: [{ data: profitData, backgroundColor: ['#0f172a','#1e293b','#334155','#475569','#64748b','#94a3b8'], borderWidth: 0 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '75%', plugins: { legend: { display: false } } }
-            });
-
-            // Bench Doughnut
-            const ctx3 = document.getElementById('benchDoughnut').getContext('2d');
-            const placed = stats.bench.filter(c => c.status === "Placed").length;
-            const active = stats.bench.filter(c => c.status === "Marketing").length;
-
-            if (charts.bench) charts.bench.destroy();
-            charts.bench = new Chart(ctx3, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Placed', 'Marketing'],
-                    datasets: [{ data: [placed, active], backgroundColor: ['#10b981', '#f5f5f4'], borderWidth: 0 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '85%', plugins: { legend: { display: false } } }
-            });
-
-            // Aging Chart
-            const ctx4 = document.getElementById('agingChart').getContext('2d');
-            const ages = [0,0,0,0]; // 0-10, 11-20, 21-40, 40+
-            stats.bench.forEach(c => {
-                if(c.aging <= 10) ages[0]++;
-                else if(c.aging <= 20) ages[1]++;
-                else if(c.aging <= 40) ages[2]++;
-                else ages[3]++;
-            });
-
-            if (charts.age) charts.age.destroy();
-            charts.age = new Chart(ctx4, {
-                type: 'bar',
-                data: {
-                    labels: ['0-10 Days', '11-20 Days', '21-40 Days', '40+ Days'],
-                    datasets: [{ label: 'Candidates', data: ages, backgroundColor: '#f59e0b', borderRadius: 4 }]
-                },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-            });
-        }
-
-        // --- 4. NAVIGATION & INITIALIZATION ---
-        function switchTab(id) {
-            ['overview', 'talent', 'planner', 'bench'].forEach(t => {
-                document.getElementById(`view-${t}`).classList.add('hidden');
-                const btn = document.getElementById(`nav-${t}`);
-                if(t === id) {
-                    btn.classList.add('bg-slate-800', 'text-white');
-                    btn.classList.remove('text-slate-300');
-                } else {
-                    btn.classList.remove('bg-slate-800', 'text-white');
-                    btn.classList.add('text-slate-300');
-                }
-            });
-            document.getElementById(`view-${id}`).classList.remove('hidden');
-            const titles = { 'overview': 'Operations Hub', 'talent': 'Talent Performance', 'planner': 'Growth Planner', 'bench': 'Bench Sales' };
-            document.getElementById('page-title').innerText = titles[id];
+            // Initial Render
             updateDashboard();
         }
 
-        window.onload = () => {
-            generateData();
+        function updateDashboard() {
+            // Update State
+            currentState.filterBranch = document.getElementById('branch-select').value;
+            currentState.filterStream = document.getElementById('stream-select').value;
+            currentState.simRoles = parseInt(document.getElementById('roles-slider').value);
+
+            // Get Data
+            const metrics = getFilteredData();
+
+            // 1. Update KPIs
+            animateValue("kpi-headcount", metrics.totalRecruiters);
+            animateValue("kpi-capacity", metrics.totalCapacity);
+            animateValue("kpi-load", metrics.currentLoad);
             
-            // Populate branch filter
-            const bSel = document.getElementById('branch-select');
-            branches.forEach(b => {
-                let o = document.createElement('option');
-                o.value = b; o.innerText = b; bSel.appendChild(o);
-            });
+            const gapEl = document.getElementById('kpi-gap');
+            const gapCard = document.getElementById('kpi-gap-card');
+            gapEl.innerText = metrics.gap > 0 ? `+${metrics.gap}` : metrics.gap;
+            
+            if (metrics.gap < 0) {
+                gapCard.classList.remove('border-stone-200');
+                gapCard.classList.add('border-rose-200', 'bg-rose-50');
+                gapEl.classList.add('text-rose-600');
+                gapEl.classList.remove('text-emerald-600', 'text-stone-800');
+            } else {
+                gapCard.classList.add('border-stone-200');
+                gapCard.classList.remove('border-rose-200', 'bg-rose-50');
+                gapEl.classList.add('text-emerald-600');
+                gapEl.classList.remove('text-rose-600', 'text-stone-800');
+            }
 
-            // Populate stream filter
-            const sSel = document.getElementById('stream-select');
-            streams.forEach(s => {
-                let o = document.createElement('option');
-                o.value = s; o.innerText = s; sSel.appendChild(o);
-            });
+            // 2. Update Charts
+            renderMainChart(metrics.branchAgg);
+            renderPieChart(metrics.totalCapacity, metrics.currentLoad);
 
-            switchTab('overview');
-        };
+            // 3. Update Matrix
+            renderMatrix(metrics.matrixData);
+
+            // 4. Update Simulator
+            updateSimulator(metrics);
+
+            // 5. Update Bench
+            updateBenchView(metrics.benchStats);
+        }
+
+        function animateValue(id, value) {
+            const el = document.getElementById(id);
+            el.innerText = value.toLocaleString();
+            // Could add real animation here, keep simple for now
+        }
+
+        function renderMatrix(data) {
+            const tbody = document.getElementById('matrix-body');
+            tbody.innerHTML = '';
+            
+            // Sort by gap ascending (worst first)
+            data.sort((a,b) => a.gap - b.gap);
+
+            data.forEach(row => {
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-stone-50 transition-colors";
+                
+                // Badge color for Gap
+                let gapClass = row.gap < 0 ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700";
+                
+                tr.innerHTML = `
+                    <td class="px-6 py-4 font-medium text-stone-800">${row.branch}</td>
+                    <td class="px-6 py-4 text-stone-500">${row.stream}</td>
+                    <td class="px-6 py-4 text-stone-500">${row.category}</td>
+                    <td class="px-6 py-4 text-right">${row.headcount}</td>
+                    <td class="px-6 py-4 text-right font-medium">${row.capacity}</td>
+                    <td class="px-6 py-4 text-right">${row.load}</td>
+                    <td class="px-6 py-4 text-center">
+                        <span class="px-2 py-1 rounded text-xs font-bold ${gapClass}">${row.gap}</span>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // --- 4. CHARTS IMPLEMENTATION ---
+
+        function renderMainChart(branchAgg) {
+            const ctx = document.getElementById('mainBarChart').getContext('2d');
+            
+            const labels = Object.keys(branchAgg);
+            const capData = labels.map(l => branchAgg[l].cap);
+            const loadData = labels.map(l => branchAgg[l].load);
+
+            if (charts.mainBar) charts.mainBar.destroy();
+
+            charts.mainBar = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Capacity',
+                            data: capData,
+                            backgroundColor: '#a5b4fc', // Indigo 300
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Current Load',
+                            data: loadData,
+                            backgroundColor: '#4f46e5', // Indigo 600
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'top' }
+                    },
+                    scales: {
+                        y: { beginAtZero: true, grid: { color: '#f5f5f4' } },
+                        x: { grid: { display: false } }
+                    }
+                }
+            });
+        }
+
+        function renderPieChart(capacity, load) {
+            const ctx = document.getElementById('utilizationPieChart').getContext('2d');
+            const free = Math.max(0, capacity - load);
+            const used = Math.min(capacity, load);
+            const overload = Math.max(0, load - capacity);
+
+            if (charts.pie) charts.pie.destroy();
+
+            charts.pie = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Utilized', 'Available', 'Overload'],
+                    datasets: [{
+                        data: [used, free, overload],
+                        backgroundColor: ['#4f46e5', '#e2e8f0', '#e11d48'], // Indigo, Slate, Rose
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+        }
+
+        // --- 5. SIMULATOR LOGIC ---
+
+        // Listen to slider
+        document.getElementById('roles-slider').addEventListener('input', function(e) {
+            document.getElementById('slider-value-display').innerText = `+${e.target.value} Roles`;
+            updateDashboard(); // Re-runs calculations including sim
+        });
+
+        function updateSimulator(metrics) {
+            // Blueprint Logic: Hiring Needed (Sim) = IF(NewGap < 0, ABS(NewGap) / 10, 0)
+            // Note: 10 is assumed average capacity. We can be smarter and use average capacity of filtered view.
+            
+            const newGap = metrics.gap - currentState.simRoles;
+            
+            // Calc avg capacity of filtered view
+            let avgCap = 10;
+            if (metrics.totalRecruiters > 0) {
+                avgCap = metrics.totalCapacity / metrics.totalRecruiters;
+            }
+
+            const hiringNeeded = newGap < 0 ? Math.ceil(Math.abs(newGap) / avgCap) : 0;
+
+            document.getElementById('sim-current-cap').innerText = metrics.totalCapacity;
+            document.getElementById('sim-current-load').innerText = metrics.currentLoad;
+            
+            const simGapEl = document.getElementById('sim-projected-gap');
+            simGapEl.innerText = newGap;
+            simGapEl.className = newGap < 0 ? "font-bold text-rose-400" : "font-bold text-emerald-400";
+
+            document.getElementById('sim-hiring-needed').innerText = hiringNeeded;
+            
+            const msgEl = document.getElementById('sim-message');
+            if (hiringNeeded > 0) {
+                msgEl.innerText = `Warning: Capacity breach detected. Hiring required to sustain +${currentState.simRoles} roles.`;
+                msgEl.className = "text-xs text-rose-300 mt-2 italic";
+            } else {
+                msgEl.innerText = "System can absorb this additional load with current headcount.";
+                msgEl.className = "text-xs text-emerald-300 mt-2 italic";
+            }
+
+            // Render Sim Chart
+            renderSimChart(metrics.totalCapacity, metrics.currentLoad, currentState.simRoles);
+        }
+
+        function renderSimChart(cap, load, added) {
+            const ctx = document.getElementById('simChart').getContext('2d');
+            if (charts.sim) charts.sim.destroy();
+
+            charts.sim = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Current State', 'Projected State'],
+                    datasets: [
+                        {
+                            label: 'Total Load',
+                            data: [load, load + added],
+                            backgroundColor: [
+                                (load > cap) ? '#e11d48' : '#4f46e5', // Red if already overloaded, else Indigo
+                                (load + added > cap) ? '#e11d48' : '#4f46e5'
+                            ],
+                            barPercentage: 0.5
+                        },
+                        {
+                            label: 'Capacity Limit', // Hacky line via bar? No, let's use a line dataset
+                            data: [cap, cap],
+                            type: 'line',
+                            borderColor: '#10b981', // Emerald
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            pointRadius: 0
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        // --- 6. BENCH ANALYTICS ---
+
+        function updateBenchView(stats) {
+            document.getElementById('bench-total').innerText = stats.total;
+            document.getElementById('bench-active').innerText = stats.active;
+            document.getElementById('bench-placed').innerText = stats.placed;
+
+            let utilPercent = stats.total > 0 ? Math.round((stats.placed / stats.total) * 100) : 0;
+            document.getElementById('bench-percent').innerText = `${utilPercent}%`;
+
+            renderBenchGauge(stats.placed, stats.active);
+            renderBenchBar(); // Using static mock data for distribution since generator didn't make ages
+        }
+
+        function renderBenchGauge(placed, active) {
+            const ctx = document.getElementById('benchGauge').getContext('2d');
+            if (charts.benchGauge) charts.benchGauge.destroy();
+
+            charts.benchGauge = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Placed', 'Marketing'],
+                    datasets: [{
+                        data: [placed, active],
+                        backgroundColor: ['#10b981', '#3b82f6'], // Emerald, Blue
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '80%',
+                    plugins: { legend: { display: false }, tooltip: { enabled: true } }
+                }
+            });
+        }
+
+        function renderBenchBar() {
+            const ctx = document.getElementById('benchBarChart').getContext('2d');
+            if (charts.benchBar) charts.benchBar.destroy();
+
+            // Mock Distribution Data
+            charts.benchBar = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['0-15 Days', '16-30 Days', '31-45 Days', '45+ Days'],
+                    datasets: [{
+                        label: 'Candidates Count',
+                        data: [12, 19, 8, 5], // Mock values
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true } }
+                }
+            });
+        }
+
+        // --- NAVIGATION ---
+        function switchTab(tabId) {
+            // Update UI
+            ['overview', 'planner', 'bench'].forEach(t => {
+                document.getElementById(`view-${t}`).classList.add('hidden');
+                const btn = document.getElementById(`nav-${t}`);
+                if(t === tabId) {
+                    btn.classList.add('bg-indigo-50', 'text-indigo-700');
+                    btn.classList.remove('text-stone-600', 'hover:bg-stone-50');
+                } else {
+                    btn.classList.remove('bg-indigo-50', 'text-indigo-700');
+                    btn.classList.add('text-stone-600', 'hover:bg-stone-50');
+                }
+            });
+            document.getElementById(`view-${tabId}`).classList.remove('hidden');
+
+            // Update Title
+            const titles = {
+                'overview': 'Operations Overview',
+                'planner': 'Bandwidth Planner',
+                'bench': 'Bench Analytics'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+
+            // Re-render charts for size correctness (Chart.js canvas resize issue sometimes)
+            updateDashboard();
+        }
+
+        function toggleMobileMenu() {
+            const aside = document.querySelector('aside');
+            aside.classList.toggle('hidden');
+            aside.classList.toggle('fixed');
+            aside.classList.toggle('inset-0');
+            aside.classList.toggle('bg-white');
+            aside.classList.toggle('z-50');
+        }
+
+        // Start
+        window.addEventListener('DOMContentLoaded', init);
+
     </script>
 </body>
 </html>

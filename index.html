@@ -147,7 +147,7 @@
                         <div class="bg-indigo-50 border-l-4 border-indigo-500 p-4 rounded-r-md">
                             <p class="text-sm text-indigo-900">
                                 <strong>Welcome to the Command Center.</strong> This view aggregates data across all branches to show total capacity vs. current workload.
-                                Use the filters above to drill down into specific locations. The metrics below are calculated in real-time based on the <em>Blueprint</em> logic.
+                                <em>Note: Capacity is calculated based on a recruiter handling only 3 roles per day.</em>
                             </p>
                         </div>
 
@@ -233,8 +233,8 @@
                     <div id="view-planner" class="space-y-6 hidden">
                         <div class="bg-emerald-50 border-l-4 border-emerald-500 p-4 rounded-r-md">
                             <p class="text-sm text-emerald-900">
-                                <strong>Strategic Planning Simulator.</strong> This tool replicates the "What-If" parameter from the blueprint. 
-                                Adjust the slider to simulate adding new roles to your selected view. The system calculates immediate hiring needs based on the "Gap" logic.
+                                <strong>Strategic Planning Simulator.</strong> Adjust the slider to simulate adding new roles. 
+                                Hiring needs are calculated based on a maximum capacity of 3 roles per recruiter.
                             </p>
                         </div>
 
@@ -307,8 +307,7 @@
                     <div id="view-bench" class="space-y-6 hidden">
                         <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
                             <p class="text-sm text-blue-900">
-                                <strong>Bench Marketing Focus.</strong> Unlike role filling, Bench Sales is about utilization. 
-                                This view isolates the 'Bench Sales' and 'IT Bench Sales' categories to track candidate placement performance.
+                                <strong>Bench Marketing Focus.</strong> Tracking candidate placement performance using the 3-unit capacity logic.
                             </p>
                         </div>
 
@@ -373,12 +372,12 @@
         const streams = ["Domestic Recruiting", "US IT Recruiting", "Canada Recruiting"];
         const categories = ["Engineering Recruiting", "IT Recruiting", "Bench Sales", "IT Bench Sales"];
         
-        // Configuration from Blueprint
+        // Updated targets based on user requirement: 3 roles per day
         const targets = {
-            "Engineering Recruiting": 15, // Roles per recruiter
-            "IT Recruiting": 20,
-            "Bench Sales": 6,             // Candidates per sales person
-            "IT Bench Sales": 8
+            "Engineering Recruiting": 3, 
+            "IT Recruiting": 3,
+            "Bench Sales": 3,             
+            "IT Bench Sales": 3
         };
 
         // Mock Database
@@ -407,8 +406,8 @@
             // Generate Loads to create interesting data (some over capacity, some under)
             db.employees.forEach(emp => {
                 const targetCap = targets[emp.category];
-                // Random load between 50% and 120% of capacity
-                const loadFactor = 0.5 + Math.random() * 0.7; 
+                // Random load relative to new capacity of 3
+                const loadFactor = 0.5 + Math.random() * 1.5; 
                 const load = Math.round(targetCap * loadFactor);
 
                 if (emp.category.includes("Bench")) {
@@ -453,9 +452,7 @@
                        (currentState.filterStream === 'All' || e.stream === currentState.filterStream);
             });
 
-            // Calculate Metrics per Employee Grouping (aggregated to Branch/Category for display)
-            // We need to aggregate Capacity and Load
-            
+            // Calculate Metrics per Employee Grouping
             let totalRecruiters = filteredEmps.length;
             let totalCapacity = 0;
             let currentLoad = 0;
@@ -476,8 +473,7 @@
                 }
             };
 
-            // We iterate through unique combinations in filteredEmps to build the matrix
-            // A simple way is to group filteredEmps
+            // Group filteredEmps
             let groups = {};
             filteredEmps.forEach(e => {
                 const key = `${e.branch}|${e.stream}|${e.category}`;
@@ -488,29 +484,7 @@
             for (let key in groups) {
                 const g = groups[key];
                 const cap = g.count * g.capUnit;
-                
-                // Load is technically per team/branch, here we approximate by splitting branch load proportionally or just recalculating specific filtering
-                // To be precise based on blueprint: Load is calculated via relationships.
-                // We will fetch ALL load items matching this Branch & Category (Stream is implied in Category/Branch for simplicity or we treat load as generic to branch/cat)
-                
-                // Refined Load Logic: 
-                // In the blueprint, Fact tables link to Branch. Stream is an Employee attribute.
-                // So, load is counted if it matches the Branch.
-                // To split load by Stream (which is a filter), we assume roles are assigned to the employees in that stream.
-                // For this simulation, we will assume uniform distribution of load across streams for the same category in a branch.
-                
                 let rawLoad = getLoad(g.branch, g.category);
-                
-                // If filtering by stream, we need to ensure we don't double count load if multiple streams share a branch/category (rare but possible). 
-                // Let's assume strict hierarchy: Load belongs to the unit.
-                // For simulation purposes: Load = rawLoad calculated above. 
-                // Note: If 'All' streams selected, rawLoad is correct. If specific Stream selected, we take the rawLoad.
-                
-                let groupLoad = rawLoad; 
-                // Adjustment: If multiple streams exist in one branch with same category, we divide load? 
-                // Let's keep it simple: The generator created roles linked to employees.
-                // But the DB structure for roles only has Branch/Category. 
-                // We will use the ratio of employees in this group vs total employees in this branch/category to allocate load.
                 
                 const totalEmpsInBranchCat = db.employees.filter(e => e.branch === g.branch && e.category === g.category).length;
                 const ratio = g.count / totalEmpsInBranchCat;
@@ -621,21 +595,18 @@
         function animateValue(id, value) {
             const el = document.getElementById(id);
             el.innerText = value.toLocaleString();
-            // Could add real animation here, keep simple for now
         }
 
         function renderMatrix(data) {
             const tbody = document.getElementById('matrix-body');
             tbody.innerHTML = '';
             
-            // Sort by gap ascending (worst first)
             data.sort((a,b) => a.gap - b.gap);
 
             data.forEach(row => {
                 const tr = document.createElement('tr');
                 tr.className = "hover:bg-stone-50 transition-colors";
                 
-                // Badge color for Gap
                 let gapClass = row.gap < 0 ? "bg-rose-100 text-rose-700" : "bg-emerald-100 text-emerald-700";
                 
                 tr.innerHTML = `
@@ -711,7 +682,7 @@
                     labels: ['Utilized', 'Available', 'Overload'],
                     datasets: [{
                         data: [used, free, overload],
-                        backgroundColor: ['#4f46e5', '#e2e8f0', '#e11d48'], // Indigo, Slate, Rose
+                        backgroundColor: ['#4f46e5', '#e2e8f0', '#e11d48'], 
                         borderWidth: 0
                     }]
                 },
@@ -726,23 +697,16 @@
 
         // --- 5. SIMULATOR LOGIC ---
 
-        // Listen to slider
         document.getElementById('roles-slider').addEventListener('input', function(e) {
             document.getElementById('slider-value-display').innerText = `+${e.target.value} Roles`;
-            updateDashboard(); // Re-runs calculations including sim
+            updateDashboard(); 
         });
 
         function updateSimulator(metrics) {
-            // Blueprint Logic: Hiring Needed (Sim) = IF(NewGap < 0, ABS(NewGap) / 10, 0)
-            // Note: 10 is assumed average capacity. We can be smarter and use average capacity of filtered view.
-            
             const newGap = metrics.gap - currentState.simRoles;
             
-            // Calc avg capacity of filtered view
-            let avgCap = 10;
-            if (metrics.totalRecruiters > 0) {
-                avgCap = metrics.totalCapacity / metrics.totalRecruiters;
-            }
+            // Calc avg capacity (Fixed at 3 roles based on user input)
+            const avgCap = 3;
 
             const hiringNeeded = newGap < 0 ? Math.ceil(Math.abs(newGap) / avgCap) : 0;
 
@@ -757,14 +721,13 @@
             
             const msgEl = document.getElementById('sim-message');
             if (hiringNeeded > 0) {
-                msgEl.innerText = `Warning: Capacity breach detected. Hiring required to sustain +${currentState.simRoles} roles.`;
+                msgEl.innerText = `Warning: Capacity breach. Hiring required to sustain +${currentState.simRoles} roles at 3 roles/recruiter.`;
                 msgEl.className = "text-xs text-rose-300 mt-2 italic";
             } else {
-                msgEl.innerText = "System can absorb this additional load with current headcount.";
+                msgEl.innerText = "Current headcount can handle this load within the 3-role daily limit.";
                 msgEl.className = "text-xs text-emerald-300 mt-2 italic";
             }
 
-            // Render Sim Chart
             renderSimChart(metrics.totalCapacity, metrics.currentLoad, currentState.simRoles);
         }
 
@@ -781,16 +744,16 @@
                             label: 'Total Load',
                             data: [load, load + added],
                             backgroundColor: [
-                                (load > cap) ? '#e11d48' : '#4f46e5', // Red if already overloaded, else Indigo
+                                (load > cap) ? '#e11d48' : '#4f46e5', 
                                 (load + added > cap) ? '#e11d48' : '#4f46e5'
                             ],
                             barPercentage: 0.5
                         },
                         {
-                            label: 'Capacity Limit', // Hacky line via bar? No, let's use a line dataset
+                            label: 'Capacity Limit', 
                             data: [cap, cap],
                             type: 'line',
-                            borderColor: '#10b981', // Emerald
+                            borderColor: '#10b981', 
                             borderWidth: 2,
                             borderDash: [5, 5],
                             pointRadius: 0
@@ -818,7 +781,7 @@
             document.getElementById('bench-percent').innerText = `${utilPercent}%`;
 
             renderBenchGauge(stats.placed, stats.active);
-            renderBenchBar(); // Using static mock data for distribution since generator didn't make ages
+            renderBenchBar(); 
         }
 
         function renderBenchGauge(placed, active) {
@@ -831,7 +794,7 @@
                     labels: ['Placed', 'Marketing'],
                     datasets: [{
                         data: [placed, active],
-                        backgroundColor: ['#10b981', '#3b82f6'], // Emerald, Blue
+                        backgroundColor: ['#10b981', '#3b82f6'], 
                         borderWidth: 0
                     }]
                 },
@@ -848,14 +811,13 @@
             const ctx = document.getElementById('benchBarChart').getContext('2d');
             if (charts.benchBar) charts.benchBar.destroy();
 
-            // Mock Distribution Data
             charts.benchBar = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: ['0-15 Days', '16-30 Days', '31-45 Days', '45+ Days'],
                     datasets: [{
                         label: 'Candidates Count',
-                        data: [12, 19, 8, 5], // Mock values
+                        data: [12, 19, 8, 5], 
                         backgroundColor: '#3b82f6',
                         borderRadius: 4
                     }]
@@ -870,7 +832,6 @@
 
         // --- NAVIGATION ---
         function switchTab(tabId) {
-            // Update UI
             ['overview', 'planner', 'bench'].forEach(t => {
                 document.getElementById(`view-${t}`).classList.add('hidden');
                 const btn = document.getElementById(`nav-${t}`);
@@ -884,7 +845,6 @@
             });
             document.getElementById(`view-${tabId}`).classList.remove('hidden');
 
-            // Update Title
             const titles = {
                 'overview': 'Operations Overview',
                 'planner': 'Bandwidth Planner',
@@ -892,7 +852,6 @@
             };
             document.getElementById('page-title').innerText = titles[tabId];
 
-            // Re-render charts for size correctness (Chart.js canvas resize issue sometimes)
             updateDashboard();
         }
 
@@ -905,7 +864,6 @@
             aside.classList.toggle('z-50');
         }
 
-        // Start
         window.addEventListener('DOMContentLoaded', init);
 
     </script>
